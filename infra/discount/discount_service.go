@@ -21,7 +21,7 @@ func NewDiscountService() DiscountService {
 }
 
 func (cc discountService) connection() (discount_pc.DiscountClient, *grpc.ClientConn) {
-	conn, err := grpc.Dial("localhost:50051", grpc.WithInsecure(), grpc.WithBlock())
+	conn, err := grpc.Dial("discount-service:50051", grpc.WithInsecure(), grpc.WithBlock())
 	if err != nil {
 		log.Fatalf("did not connect: %v", err)
 	}

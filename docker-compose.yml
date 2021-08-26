@@ -1,7 +1,25 @@
 version: "3.8"
 
+networks:
+  cart-checkout:
+    driver: bridge
+
 services:
   discount-service:
+    networks:
+      - cart-checkout
     ports:
       - 50051:50051
     image: hashorg/hash-mock-discount-service
+
+  cart-checkout-backend:
+    container_name: cart-checkout-backend
+    networks:
+      - cart-checkout
+    build:
+      dockerfile: ./.infra/Dockerfile
+      context: .
+    ports:
+      - '3000:3000'
+    depends_on:
+      - discount-service
