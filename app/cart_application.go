@@ -1,6 +1,8 @@
 package app
 
 import (
+	"time"
+
 	discount_service "cart-checkout-simulation/infra/discount"
 	repository "cart-checkout-simulation/infra/repository"
 	cart_request "cart-checkout-simulation/input/cart/request"
@@ -35,6 +37,8 @@ func (ca cartApplication) GetCart(cartRequest *cart_request.CartRequest) (cart_r
 		return cartResponse, err
 	}
 
+	winGift := false
+
 	for _, v := range products {
 		for _, p := range cartRequest.Products {
 			if p.ID == v.ID {
@@ -50,7 +54,7 @@ func (ca cartApplication) GetCart(cartRequest *cart_request.CartRequest) (cart_r
 					UnityAmount: unitProductAmountInCents,
 					TotalAmount: totalProductAmountInCents,
 					Discount:    productDiscountInCents,
-					IsGift:      v.IsGift,
+					IsGift:      false,
 				}
 
 				cartResponse.TotalAmount += totalProductAmountInCents
@@ -59,9 +63,34 @@ func (ca cartApplication) GetCart(cartRequest *cart_request.CartRequest) (cart_r
 				cartResponse.Products = append(cartResponse.Products, productResponse)
 			}
 		}
+
+		if ca.isBlackFriday() && v.IsGift && !winGift {
+			productResponse := product_response.ProductResponse{
+				ID:          v.ID,
+				Quantity:    1,
+				UnityAmount: 0,
+				TotalAmount: 0,
+				Discount:    0,
+				IsGift:      false,
+			}
+
+			cartResponse.Products = append(cartResponse.Products, productResponse)
+			winGift = true
+
+			continue
+		}
 	}
 
 	cartResponse.TotalAmountWithDiscount = cartResponse.TotalAmount - cartResponse.TotalDiscount
 
 	return cartResponse, nil
+}
+
+func (ca cartApplication) isBlackFriday() bool {
+	month := 9
+	day := 26
+
+	_, m, d := time.Now().Date()
+
+	return int(m) == month && d == day
 }
