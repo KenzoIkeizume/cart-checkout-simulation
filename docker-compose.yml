@@ -1,0 +1,7 @@
+version: "3.8"
+
+services:
+  discount-service:
+    ports:
+      - 50051:50051
+    image: hashorg/hash-mock-discount-service
