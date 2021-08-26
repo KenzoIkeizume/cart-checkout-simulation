@@ -25,7 +25,10 @@ func (ca cartApplication) GetCart(cartRequest *cart_request.CartRequest) (cart_r
 	products, err := ca.productRepository.FindAll()
 
 	cartResponse := cart_response.CartResponse{
-		Products: []product_response.ProductResponse{},
+		TotalAmount:             0,
+		TotalAmountWithDiscount: 0,
+		TotalDiscount:           0,
+		Products:                []product_response.ProductResponse{},
 	}
 
 	if err != nil {
@@ -36,21 +39,29 @@ func (ca cartApplication) GetCart(cartRequest *cart_request.CartRequest) (cart_r
 		for _, p := range cartRequest.Products {
 			if p.ID == v.ID {
 				var centsMath int32 = 100 * 100
-				productDiscount := int32(ca.discountService.GetDiscount(p.ID) * float32(centsMath))
+
+				productDiscountInCents := int32(ca.discountService.GetDiscount(p.ID) * float32(centsMath))
+				unitProductAmountInCents := v.Amount * centsMath
+				totalProductAmountInCents := v.Amount * p.Quantity * centsMath
 
 				productResponse := product_response.ProductResponse{
 					ID:          v.ID,
 					Quantity:    p.Quantity,
-					UnityAmount: v.Amount * centsMath,
-					TotalAmount: v.Amount * p.Quantity * centsMath,
-					Discount:    productDiscount,
+					UnityAmount: unitProductAmountInCents,
+					TotalAmount: totalProductAmountInCents,
+					Discount:    productDiscountInCents,
 					IsGift:      v.IsGift,
 				}
+
+				cartResponse.TotalAmount += totalProductAmountInCents
+				cartResponse.TotalDiscount += productDiscountInCents
 
 				cartResponse.Products = append(cartResponse.Products, productResponse)
 			}
 		}
 	}
+
+	cartResponse.TotalAmountWithDiscount = cartResponse.TotalAmount - cartResponse.TotalDiscount
 
 	return cartResponse, nil
 }
