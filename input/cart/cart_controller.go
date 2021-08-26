@@ -9,6 +9,7 @@ import (
 
 	application "cart-checkout-simulation/app"
 	datastore "cart-checkout-simulation/infra/datastore"
+	discount_service "cart-checkout-simulation/infra/discount"
 	repository "cart-checkout-simulation/infra/repository"
 	cart_request "cart-checkout-simulation/input/cart/request"
 )
@@ -24,7 +25,8 @@ type CartController interface {
 func NewCartController() CartController {
 	db := datastore.NewDatabase()
 	productRepository := repository.NewProductRespository(db)
-	cartApplication := application.NewCartApplication(productRepository)
+	discountService := discount_service.NewDiscountService()
+	cartApplication := application.NewCartApplication(productRepository, discountService)
 	return &cartController{cartApplication}
 }
 

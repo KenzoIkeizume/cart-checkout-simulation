@@ -1,6 +1,7 @@
 package app
 
 import (
+	discount_service "cart-checkout-simulation/infra/discount"
 	repository "cart-checkout-simulation/infra/repository"
 	cart_request "cart-checkout-simulation/input/cart/request"
 	cart_response "cart-checkout-simulation/input/cart/response"
@@ -9,14 +10,15 @@ import (
 
 type cartApplication struct {
 	productRepository repository.ProductRepository
+	discountService   discount_service.DiscountService
 }
 
 type CartApplication interface {
 	GetCart(cartRequest *cart_request.CartRequest) (cart_response.CartResponse, error)
 }
 
-func NewCartApplication(productRepository repository.ProductRepository) CartApplication {
-	return &cartApplication{productRepository}
+func NewCartApplication(productRepository repository.ProductRepository, discountService discount_service.DiscountService) CartApplication {
+	return &cartApplication{productRepository, discountService}
 }
 
 func (ca cartApplication) GetCart(cartRequest *cart_request.CartRequest) (cart_response.CartResponse, error) {
@@ -33,11 +35,15 @@ func (ca cartApplication) GetCart(cartRequest *cart_request.CartRequest) (cart_r
 	for _, v := range products {
 		for _, p := range cartRequest.Products {
 			if p.ID == v.ID {
+				var centsMath int32 = 100 * 100
+				productDiscount := int32(ca.discountService.GetDiscount(p.ID) * float32(centsMath))
+
 				productResponse := product_response.ProductResponse{
 					ID:          v.ID,
 					Quantity:    p.Quantity,
-					UnityAmount: v.Amount,
-					TotalAmount: v.Amount * p.Quantity,
+					UnityAmount: v.Amount * centsMath,
+					TotalAmount: v.Amount * p.Quantity * centsMath,
+					Discount:    productDiscount,
 					IsGift:      v.IsGift,
 				}
 
