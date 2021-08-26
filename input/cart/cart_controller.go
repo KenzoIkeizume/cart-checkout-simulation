@@ -2,12 +2,19 @@ package cart
 
 import (
 	"encoding/json"
+	"fmt"
 	"net/http"
 
 	"github.com/gorilla/mux"
+
+	application "cart-checkout-simulation/app"
+	datastore "cart-checkout-simulation/infra/datastore"
+	repository "cart-checkout-simulation/infra/repository"
+	cart_request "cart-checkout-simulation/input/cart/request"
 )
 
 type cartController struct {
+	cartApplication application.CartApplication
 }
 
 type CartController interface {
@@ -15,7 +22,10 @@ type CartController interface {
 }
 
 func NewCartController() CartController {
-	return &cartController{}
+	db := datastore.NewDatabase()
+	productRepository := repository.NewProductRespository(db)
+	cartApplication := application.NewCartApplication(productRepository)
+	return &cartController{cartApplication}
 }
 
 func (cc cartController) post(w http.ResponseWriter, r *http.Request) {
@@ -23,8 +33,8 @@ func (cc cartController) post(w http.ResponseWriter, r *http.Request) {
 
 	decoder := json.NewDecoder(r.Body)
 
-	var cr *CartRequest
-	cr = new(CartRequest)
+	var cr *cart_request.CartRequest
+	cr = new(cart_request.CartRequest)
 
 	err := decoder.Decode(&cr)
 	if err != nil {
@@ -33,8 +43,16 @@ func (cc cartController) post(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	cartResponse, err := cc.cartApplication.GetCart(cr)
+	if err != nil {
+		messageError := fmt.Sprintf(`{"message": "%s"}`, err)
+		w.WriteHeader(http.StatusUnprocessableEntity)
+		w.Write([]byte(messageError))
+		return
+	}
+
 	w.WriteHeader(http.StatusOK)
-	json.NewEncoder(w).Encode(cr)
+	json.NewEncoder(w).Encode(cartResponse)
 }
 
 func SetRouter(router *mux.Router) {
