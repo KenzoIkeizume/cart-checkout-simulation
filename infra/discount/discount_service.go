@@ -2,9 +2,11 @@ package discount
 
 import (
 	"context"
+	"fmt"
 	"log"
 	"time"
 
+	"github.com/spf13/viper"
 	"google.golang.org/grpc"
 
 	discount_pc "cart-checkout-simulation/infra/discount/proto"
@@ -21,7 +23,9 @@ func NewDiscountService() DiscountService {
 }
 
 func (cc discountService) connection() (discount_pc.DiscountClient, *grpc.ClientConn) {
-	conn, err := grpc.Dial("discount-service:50051", grpc.WithInsecure(), grpc.WithBlock())
+	host := viper.GetString("discount_service_host")
+	port := viper.GetString("discount_service_port")
+	conn, err := grpc.Dial(fmt.Sprintf("%s:%s", host, port), grpc.WithInsecure(), grpc.WithBlock())
 	if err != nil {
 		log.Fatalf("did not connect: %v", err)
 	}

@@ -1,12 +1,14 @@
 package input
 
 import (
+	"fmt"
 	"log"
 	"net/http"
 
 	cart_controller "cart-checkout-simulation/input/cart"
 
 	"github.com/gorilla/mux"
+	"github.com/spf13/viper"
 )
 
 func notFound(w http.ResponseWriter, r *http.Request) {
@@ -20,7 +22,8 @@ func AppController() {
 	cart_controller.SetRouter(router)
 	router.HandleFunc("", notFound)
 
-	println("Listen server on port 3000")
+	port := viper.GetString("app_port")
+	println("Listen server on port", port)
 
-	log.Fatal(http.ListenAndServe(":3000", router))
+	log.Fatal(http.ListenAndServe(fmt.Sprintf(":%s", port), router))
 }

@@ -3,6 +3,8 @@ package app
 import (
 	"time"
 
+	"github.com/spf13/viper"
+
 	discount_service "cart-checkout-simulation/infra/discount"
 	repository "cart-checkout-simulation/infra/repository"
 	cart_request "cart-checkout-simulation/input/cart/request"
@@ -42,7 +44,7 @@ func (ca cartApplication) GetCart(cartRequest *cart_request.CartRequest) (cart_r
 	for _, v := range products {
 		for _, p := range cartRequest.Products {
 			if p.ID == v.ID {
-				var centsMath int32 = 100 * 100
+				centsMath := viper.GetInt32("cents_math")
 
 				productDiscountInCents := int32(ca.discountService.GetDiscount(p.ID) * float32(centsMath))
 				unitProductAmountInCents := v.Amount * centsMath
@@ -87,8 +89,8 @@ func (ca cartApplication) GetCart(cartRequest *cart_request.CartRequest) (cart_r
 }
 
 func (ca cartApplication) isBlackFriday() bool {
-	month := 9
-	day := 26
+	month := viper.GetInt("blackfriday_month")
+	day := viper.GetInt("blackfriday_day")
 
 	_, m, d := time.Now().Date()
 

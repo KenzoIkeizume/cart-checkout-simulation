@@ -1,0 +1,9 @@
+app_port: 3000
+
+cents_math: 10000
+
+blackfriday_day: 26
+blackfriday_month: 9
+
+discount_service_host: discount-service
+discount_service_port: 50051
