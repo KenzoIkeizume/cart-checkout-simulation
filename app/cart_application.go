@@ -73,7 +73,7 @@ func (ca cartApplication) GetCart(cartRequest *cart_request.CartRequest) (cart_r
 				UnityAmount: 0,
 				TotalAmount: 0,
 				Discount:    0,
-				IsGift:      false,
+				IsGift:      true,
 			}
 
 			cartResponse.Products = append(cartResponse.Products, productResponse)
