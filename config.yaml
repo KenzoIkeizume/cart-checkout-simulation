@@ -7,3 +7,4 @@ blackfriday_month: 9
 
 discount_service_host: discount-service
 discount_service_port: 50051
+discount_service_timeout_seconds: 5

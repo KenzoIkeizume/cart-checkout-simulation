@@ -25,9 +25,14 @@ func NewDiscountService() DiscountService {
 func (cc discountService) connection() (discount_pc.DiscountClient, *grpc.ClientConn) {
 	host := viper.GetString("discount_service_host")
 	port := viper.GetString("discount_service_port")
-	conn, err := grpc.Dial(fmt.Sprintf("%s:%s", host, port), grpc.WithInsecure(), grpc.WithBlock())
+	timeout := viper.GetInt("discount_service_timeout_seconds")
+
+	conn, err := grpc.Dial(fmt.Sprintf("%s:%s", host, port), grpc.WithTimeout(time.Duration(timeout)*time.Second), grpc.WithInsecure(), grpc.WithBlock())
+
 	if err != nil {
-		log.Fatalf("did not connect: %v", err)
+		fmt.Printf("did not connect: %v", err)
+		// do not lock the process
+		return nil, nil
 	}
 
 	c := discount_pc.NewDiscountClient(conn)
@@ -37,6 +42,11 @@ func (cc discountService) connection() (discount_pc.DiscountClient, *grpc.Client
 
 func (cc discountService) GetDiscount(productID int32) float32 {
 	discountClient, conn := cc.connection()
+	if discountClient == nil || conn == nil {
+		// do not lock the process
+		return 0
+	}
+
 	defer conn.Close()
 
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
@@ -44,7 +54,9 @@ func (cc discountService) GetDiscount(productID int32) float32 {
 
 	r, err := discountClient.GetDiscount(ctx, &discount_pc.GetDiscountRequest{ProductID: productID})
 	if err != nil {
-		log.Fatalf("could not get discount: %v", err)
+		log.Printf("could not get discount: %v", err)
+		// do not lock the process
+		return 0
 	}
 
 	return r.GetPercentage()
